@@ -1,81 +1,106 @@
-import React, { useEffect, useState } from "react";
-import { data } from "./data";
-import "./style.css";
+import React, { useState, useEffect } from 'react';
+import "./style.css"
+const questions = [
+  {
+    question: "Which monuments is this?",
+    options: ["Lal-kila", "Alberthall", "JantarMantar", "AmberFort"],
+    answer: "Lal-kila",
+    image: "https://th.bing.com/th/id/OIP.BBqMJ6EQsz1yJ-2JKCXNawHaEU?w=1200&h=700&rs=1&pid=ImgDetMain" // URL of the image for the first question
+  },
+  {
+    question: "Capital of France",
+    options: ["Paris", "Marseille", "Lyon", "Toulouse",],
+    answer: "Paris",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQiVoQJvfQufxs_MaY172KyVWtUFs4gbOZmezY0S_hclQ&s" // URL of the image for the second question
+  },
+  {
+    question: "3+3+3",
+    options: [0, 333, 6, 9],
+    answer: 9,
+    
+  },
+  {
+    question: "4*4/4",
+    options: [4, 0, 8, 16],
+    answer: 4,
+   
+  },
+  {
+          question: "What is the capital of India?",
+          options: ["Delhi", "Mumbai", "Berlin", "Madrid"],
+          answer: "Delhi",
+          image: "https://th.bing.com/th/id/OIP.F4H8zeHW5ca9fWte1GVxqAHaF0?rs=1&pid=ImgDetMain" // Add image URL for the first question
+        },
+];
 
-function Main() {
-  const [showScore, setShowScore] = useState(false);
-  const [questionNumber, setQuestionNumber] = useState(0);
-  const [selectedOption, setSelectedOption] = useState('');
-  const [userAnswers, setUserAnswers] = useState([]);
-  const [timer, setTimer] = useState(20);
-
-  function calculateScore() {
-    let score = 0;
-    for (let i = 0; i < data.length; i++) {
-      if (userAnswers[i] === data[i].answer.toString()) {
-        score++;
-      }
-    }
-    return score;
-  }
+const Main = () => {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [score, setScore] = useState(0);
+  const [timer, setTimer] = useState(5); // Initial timer value set to 5 seconds
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (timer === 0 || questionNumber === data.length - 1) {
-        clearInterval(interval);
-        setShowScore(true);
-      } else {
-        setTimer(timer - 1);
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [timer, questionNumber]);
+      setTimer(prevTimer => {
+        if (prevTimer === 1) {
+          handleNextQuestion();
+          return 5; 
+        } else {
+          return prevTimer - 1; 
+        }
+      });
+    }, 1000); // Update timer every second
 
-  useEffect(() => {
-    setUserAnswers([...userAnswers, selectedOption]);
-  }, [selectedOption]);
+    // Clear interval on component unmount
+    return () => clearInterval(interval);
+  }, [currentQuestion]); // Run effect whenever currentQuestion changes
+
+  const handleOptionSelect = option => {
+    setSelectedOption(option);
+    if (option === questions[currentQuestion].answer) {
+      setScore(score + 1);
+    }
+    handleNextQuestion();
+  };
 
   const handleNextQuestion = () => {
-    if (questionNumber < data.length - 1) {
-      setQuestionNumber(questionNumber + 1);
-      setTimer(20); // Reset timer for the next question
-    } else {
-      setShowScore(true);
-    }
+    setSelectedOption(null);
+    setCurrentQuestion(prevQuestion => prevQuestion + 1);
+    setTimer(5); // Reset timer to 5 seconds for the next question
   };
 
   return (
-    <>
-      {showScore ? (
-        <div id="score">
-          <h3>
-            Tumhara score hai {calculateScore()} out of {data.length}
-          </h3>
+    <div className="wrapper">
+    <div className='quiz'>
+      <h3>Quiz Application</h3>
+      {currentQuestion < questions.length ? (
+        <div>
+          <h4>Time remaining: {timer} seconds</h4>
+          {questions[currentQuestion].image && (
+            <img src={questions[currentQuestion].image} alt="Question" style={{ maxWidth: '20%' }} />
+          )}
+          <h3>{questions[currentQuestion].question}</h3>
+          <ul>
+            {questions[currentQuestion].options.map((option, index) => (
+              <li key={index}>
+                <button
+                  onClick={() => handleOptionSelect(option)}
+                  disabled={selectedOption !== null}
+                >
+                  {option}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : (
-        <div id="quiz">
-          <h3>{data[questionNumber]?.question}</h3> 
-          <div className="options">
-            {data[questionNumber]?.options.map((option, index) => ( 
-              <label key={index}>
-                <input
-                  type="radio"
-                  name="opt"
-                  value={option}
-                  onClick={() => setSelectedOption(option)}
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-          <div>
-            <p>Time left: {timer} seconds</p>
-            <button onClick={handleNextQuestion}>Next</button>
-          </div>
+        <div>
+          <p>Your score is: {score} out of {questions.length}</p>
         </div>
       )}
-    </>
+    </div>
+    </div>
   );
-}
+};
 
 export default Main;
